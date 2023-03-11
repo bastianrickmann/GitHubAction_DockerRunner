@@ -1,12 +1,14 @@
 FROM ubuntu
-WORKDIR ~
+ARG RUNNER_VERSION="2.302.1"
+WORKDIR /home/docker
 ENV TOKEN=
 ENV URL=
-CMD ["bash"]
-RUN apt update && apt upgrade -y
+RUN apt update && apt upgrade -y && useradd -m docker
 RUN apt install curl -y
-RUN mkdir actions-runner && cd actions-runner
-RUN curl -o actions-runner-linux-x64-2.302.1.tar.gz -L https://github.com/actions/runner/releases/download/v2.302.1/actions-runner-linux-x64-2.302.1.tar.gz
-RUN tar xzf ./actions-runner-linux-x64-2.302.1.tar.gz
+RUN cd /home/docker && mkdir actions-runner && cd actions-runner \
+    && curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
+    && tar xzf ./actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
+RUN chown -R docker /home/docker && /home/docker/actions-runner/bin/installdependencies.sh
+USER docker
 
-ENTRYPOINT ["sh", " ~/actions-runner/config.sh --url $URL --token $TOKEN && ~/actions-runner/run.sh"]
+CMD  ~/actions-runner/config.sh --url $URL --token $TOKEN && ~/actions-runner/run.sh
